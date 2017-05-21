@@ -1,0 +1,23 @@
+{
+  "name": "intelliLuaServer",
+  "description": "Language Server For intelliLua.",
+  "version": "0.1.0",
+  "author": "liwangqian87@163.com",
+  "license": "GPL",
+  "engines": {
+    "node": "*"
+  },
+  "dependencies": {
+    "vscode-languageserver": "^2.6.0",
+    "luaparse": "^0.2.3",
+    "vscode-uri": "^1.0.0",
+    "walk": "^2.3.9"
+  },
+  "devDependencies": {
+    "typescript": "^2.1.4"
+  },
+  "scripts": {
+    "compile": "installServerIntoExtension ../client ./package.json ./tsconfig.json && tsc -p .",
+    "watch": "installServerIntoExtension ../client ./package.json ./tsconfig.json && tsc --watch -p ."
+  }
+}

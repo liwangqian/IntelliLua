@@ -1,0 +1,79 @@
+{
+	"name": "IntelliLua",
+	"description": "Lua Intellisense Support For Vscode.",
+	"author": "liwangqian87@163.com",
+	"license": "MIT",
+	"version": "0.1.0",
+	"publisher": "liwangqian",
+	"engines": {
+		"vscode": "^1.4.0"
+	},
+	"categories": [
+		"Languages"
+	],
+	"icon": "icon.png",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/liwangqian/IntelliLua"
+	},
+	"bugs": {
+		"url": "https://github.com/liwangqian/IntelliLua/issues"
+	},
+	"activationEvents": [
+		"onLanguage:lua"
+	],
+	"main": "./out/src/extension",
+	"scripts": {
+		"vscode:prepublish": "tsc -p ./",
+		"compile": "tsc -watch -p ./",
+		"postinstall": "node ./node_modules/vscode/bin/install"
+	},
+	"contributes": {
+		"configuration": {
+			"type": "object",
+			"title": "IntelliLua configuration",
+			"properties": {
+				"intelliLua.searchOptions.filters": {
+					"type":"array",
+					"default":[],
+					"description": "directory contains these names is not search."
+				},
+				"intelliLua.searchOptions.externalPaths": {
+					"type":"array",
+					"default":[],
+					"description": "external path to be search."
+				},
+				"intelliLua.searchOptions.followLinks": {
+					"type":"boolean",
+					"default":false,
+					"description": "whether search the links."
+				},
+				"intelliLua.documentSymbols.showGlobalsOnly": {
+					"type":"boolean",
+					"default": true,
+					"description": "only the global defined symbols to be show."
+				},
+				"intelliLua.parseOptions.luaversion": {
+					"type":"number",
+					"default":5.1,
+					"description": "the lua version number."
+				}
+			}
+		}
+	},
+	"devDependencies": {
+		"typescript": "^2.1.4",
+		"vscode": "^1.0.3",
+		"mocha": "^2.3.3",
+		"@types/node": "^6.0.40",
+		"@types/mocha": "^2.2.32"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^2.6.0"
+	},
+	"__metadata": {
+		"id": "8466515a-a036-406e-b1e5-a04c7c81453c",
+		"publisherId": "3a9ea834-08ae-40c0-851d-fafcef353e86",
+		"publisherDisplayName": "liwangqian"
+	}
+}
