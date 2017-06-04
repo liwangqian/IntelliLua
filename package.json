@@ -57,6 +57,11 @@
 					"type":"number",
 					"default":5.1,
 					"description": "the lua version number."
+				},
+				"intelliLua.debug.enable": {
+					"type": "boolean",
+					"default": false,
+					"description": "enable debug output."
 				}
 			}
 		}

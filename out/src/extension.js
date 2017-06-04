@@ -20,7 +20,7 @@ function activate(context) {
         documentSelector: ['lua'],
         synchronize: {
             configurationSection: 'intelliLua',
-            fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
+            fileEvents: [vscode.workspace.createFileSystemWatcher('**/.lua')]
         }
     };
     

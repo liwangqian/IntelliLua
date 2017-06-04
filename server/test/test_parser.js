@@ -1,53 +1,30 @@
-var { Uri }   = require('../lib/util');
-var { SymbolParser } = require('../lib/SymbolParser');
-var VscodeUri = require('vscode-uri');
+const UnitTest = require('../lib/unit-test');
+const path     = require('path');
+const fs       = require('fs');
 
-function test(){
-    var fileName = "F:\\JavaScript\\lua-test-project\\drv_base.lua";
-    var fileUri = Uri.toUri(fileName);
-    var symbolCollection = SymbolParser.parse(fileUri, {});
-    if (!symbolCollection) {
-        console.log("parse is failed.\n");
-        return;
-    }
 
-    function printSymbols(symbolCollection, depth) {
-        for (var key in symbolCollection) {
-            var element = symbolCollection[key];
-            if (typeof element != typeof {} || element == null) {
-                console.log("\t".repeat(depth) + key + ": " + element + "\n");
-            } else {
-                console.log("\t".repeat(depth) + key + ": {\n");
-                printSymbols(element, depth + 1);
-                console.log("\t".repeat(depth) + "}\n");
-            }
+for (var i = 0; i < 1; ++i) {
+    const testRunner = new UnitTest.TestRunner(console.log);
+    testRunner.run("F:\\lua\\power_manage");
+}
+console.log("I am here")
 
-        }
-    }
-
-    printSymbols(symbolCollection, 0);
-
+var luacov = path.resolve("F:\\lua\\power_manage", ".luacov");
+if (fs.existsSync(luacov)) {
+    console.log(fs.readFileSync(luacov).toString());
 }
 
-//test();
+const fileName = 'external';
+const LUACOV_LINE_REGEX = /(.+)\s+(\d+)\s+(\d+)\s+(\d+\.\d+\%)/g;
+const content = fs.readFileSync('F:\\lua\\power_manage\\luacov.report.out').toString();
+var matches = content.match(LUACOV_LINE_REGEX);
+var rate  = 0;
 
-console.log([].concat([{"q":1, "b":2},]));
-
-
-function getWordBackward(str, lastIdx)
-{
-    if (lastIdx <= 1)
-        return null;
-    
-    
+for (var i = 0; i < matches.length; ++i) {
+    if (matches[i].includes(fileName)) {
+        rate = matches[i].match(/(\d+.\d+)\%$/g)[0];
+        break;
+    }
 }
 
-var regexp = /(\w+\.(\w+:)?)$/g;
-
-console.log(" ddd.xxx  devmi.fcnd:".match(regexp)[0].split(/[.:]/g))
-
-var empty = [];
-console.log(empty[0])
-
-var moduleName = null;
-console.log("moduleName" + moduleName);
+console.log(rate);
