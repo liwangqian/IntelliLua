@@ -8,5 +8,5 @@
 
 ##计划特性
 1. 基于luacheck的静态检查
-2. 给予busted/luacov的单元测试以及覆盖率
+2. 基于busted/luacov的单元测试以及覆盖率
 3. 代码度量数据：圈复杂度
