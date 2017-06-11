@@ -63,7 +63,7 @@ class TestRunner {
 
         for (var i = 0; i < coverages.length; ++i) {
             if (coverages[i].includes(fileName)) {
-                rate = coverages[i].match(/(\d+.\d+)\%$/g)[0];
+                rate = coverages[i].match(/(\d+.\d+)\%$/)[0];
                 break;
             }
         }
@@ -94,11 +94,11 @@ class TestRunner {
             // this._logger(out);
 
             if (failed) {
-                this._failed += parseInt(failed[0].match(/(\d+)/g));
+                this._failed += parseInt(failed[0].match(/(\d+)/));
             }
             
             if (passed) {
-                this._passed += parseInt(passed[0].match(/(\d+)/g));
+                this._passed += parseInt(passed[0].match(/(\d+)/));
             }
         });
 

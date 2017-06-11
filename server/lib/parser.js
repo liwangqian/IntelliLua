@@ -116,9 +116,9 @@ const Uri    = require('vscode-uri').default;
 
     function parseFunctionParams(params, container, scope, symbolCollection) {
         for (var i = 0; i < params.length; i++) {
-            var symbol = NewSymbolInfo(params[i].name);
+            var symbol = NewSymbolInfo(params[i].name || params[i].value);
             symbol.kind      = convertSymbolKind("Variable");
-            symbol.isLocal   = params[i].isLocal;
+            symbol.isLocal   = true;
             symbol.range     = getRange(params[i]);
             symbol.scope     = scope;
             symbol.container = container;
