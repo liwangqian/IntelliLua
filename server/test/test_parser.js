@@ -1,6 +1,7 @@
 const UnitTest = require('../lib/unit-test');
 const path     = require('path');
 const fs       = require('fs');
+const async    = require('async');
 
 
 for (var i = 0; i < 1; ++i) {
@@ -28,3 +29,17 @@ for (var i = 0; i < matches.length; ++i) {
 }
 
 console.log(rate);
+
+var x = [1,2,3,4,5,6,7,8,9];
+var y = [];
+async.map(x, (item, callback) => {
+    y.push(item * 9);
+});
+
+console.log(y)
+
+out = "luac: power_base.lua:427: '<eof>' expected near 'end'"
+
+regex = /^luac:\s+.+\:(\d+)\:\s+(.+)$/;
+
+console.log(regex.exec(out))

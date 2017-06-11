@@ -9,6 +9,7 @@ const {SymbolProvider}     = require('./symbol-provider');
 const {CompletionProvider} = require('./completion-provider');
 const {DefinitionProvider} = require('./definition-provider');
 const {HoverProvider}      = require('./hover-provider');
+const {DiagnosticProvider} = require('./diagnostic-provider');
 
 class IntelliLua {
     constructor() {
@@ -21,12 +22,10 @@ class IntelliLua {
         this.completionProvider = new CompletionProvider(this);
         this.definitionProvider = new DefinitionProvider(this);
         this.hoverProvider      = new HoverProvider(this);
+        this.diagnosticProvider = new DiagnosticProvider(this);
 
-        this._searchOptions   = { filters: [], followLinks: false, externalPaths: [] };
-        this._parseOptions    = { luaversion: 5.1 };
-        this._showGlobalsOnly = true;
-        this._DEBUG_MODE      = false;
-        this._initialized     = false;
+        this.settings     = null;
+        this._initialized = false;
     }
 
     initialize(context) {
@@ -47,7 +46,7 @@ class IntelliLua {
     }
     
     debug(msg) {
-        if (this._DEBUG_MODE)
+        if (this.settings.debug.enable)
             this.conn.console.log(msg);
     }
 
@@ -63,33 +62,25 @@ class IntelliLua {
     }
 
     onDidChangeConfiguration(change) {
-        let settings = change.settings.intelliLua;
-    
-        this._searchOptions.filters       = settings.searchOptions.filters;
-        this._searchOptions.followLinks   = settings.searchOptions.followLinks;
-        this._searchOptions.externalPaths = settings.searchOptions.externalPaths;
-
-        this._parseOptions.luaversion     = settings.parseOptions.luaversion;
-
-        this._showGlobalsOnly             = settings.documentSymbols.showGlobalsOnly;
-        this._DEBUG_MODE                  = settings.debug.enable;
+        let settings  = change.settings.intelliLua;
+        this.settings = change.settings.intelliLua;
 
         this.fileManager.reset();
-        this.fileManager.setRoots(this._searchOptions.externalPaths.concat(this.workspaceRoot));
-        this.fileManager.searchFiles(this._searchOptions, ".lua");
+        this.fileManager.setRoots(settings.searchOptions.externalPaths.concat(this.workspaceRoot));
+        this.fileManager.searchFiles(settings.searchOptions, ".lua");
     }
 
     onDidChangeContent(change) {
         var uri = change.document.uri;
         if (this.symbolProvider.isParsed(uri)) {
             this.symbolProvider.markDirty(uri, true);
-            return;
+        } else {
+            if (!Util.parseFile(this.symbolProvider, change.document, uri, true)) {
+                this.debug(`[ERROR] onDidChangeContent >>> parse file ${uri} is failed.`);
+            }
         }
 
-        if (!Util.parseFile(this.symbolProvider, this.documents.get(uri), uri, true)) {
-            this.debug(`[ERROR] onDidChangeContent >>> parse file ${uri} is failed.`);
-            return;
-        }
+        this.diagnosticProvider.provideDiagnostic(change.document);
     }
 
     onDidSave(params) {
@@ -97,6 +88,8 @@ class IntelliLua {
         if (!Util.parseFile(this.symbolProvider, this.documents.get(uri), uri, true)) {
             this.debug(`[ERROR] onDidSave >>> parse file ${uri} is failed.`);
         }
+
+        this.diagnosticProvider.provideDiagnostic(change.document);
     }
 
     onDidChangeWatchedFiles(change) {
@@ -106,12 +99,12 @@ class IntelliLua {
     provideDocumentSymbols(params) {
         var uri = params.textDocument.uri;
         if (!Util.parseFile(this.symbolProvider, this.documents.get(uri), uri, false)) {
-            debug(`[ERROR] onDocumentSymbol >>> parse file ${uri} is failed.`);
+            this.debug(`[ERROR] onDocumentSymbol >>> parse file ${uri} is failed.`);
             return [];
         }
 
         return this.symbolProvider.getDefinitions(uri).filter((symbol) => {
-            return (!this._showGlobalsOnly) || (this._showGlobalsOnly && !symbol.isLocal);
+            return (!this.settings.showGlobalsOnly) || (this.settings.showGlobalsOnly && !symbol.isLocal);
         }).map((symbol) => {
             return Langserver.SymbolInformation.create(symbol.name, symbol.kind, 
                                                     symbol.range, symbol.uri, 
@@ -133,6 +126,14 @@ class IntelliLua {
 
     provideHover(params) {
         return this.hoverProvider.provideHover(params);
+    }
+
+    sendDiagnostics(diagnostics) {
+        this.conn.sendDiagnostics(diagnostics);
+    }
+
+    showWarningMessage(msg) {
+        this.conn.window.showWarningMessage(msg);
     }
 }
 

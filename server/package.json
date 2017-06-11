@@ -9,9 +9,11 @@
   },
   "dependencies": {
     "vscode-languageserver": "^2.6.0",
-    "luaparse": "^0.2.3",
+    "luaparse": "^0.2.1",
     "vscode-uri": "^1.0.0",
-    "walk": "^2.3.9"
+    "walk": "^2.3.9",
+    "tree-kill": "^1.1.0"
+    // "async": "^2.4.1"
   },
   "devDependencies": {
     "typescript": "^2.1.4"

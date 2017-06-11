@@ -62,6 +62,21 @@
 					"type": "boolean",
 					"default": false,
 					"description": "enable debug output."
+				},
+				"intelliLua.luacheck.luacheckPath": {
+					"type":"string",
+					"default": "luacheck.exe",
+					"description": "path of the luacheck excutable (https://github.com/mpeterv/luacheck)."
+				},
+				"intelliLua.luacheck.jobs": {
+					"type":"integer",
+					"default": 1,
+					"description": "number of jobs for parallel check, this dependence on luaLanes."
+				},
+				"intelliLua.luacheck.configFilePath": {
+					"type":"string",
+					"default": ".",
+					"description": "the configuration (.luacheckrc) file for luacheck."
 				}
 			}
 		}
@@ -74,7 +89,9 @@
 		"@types/mocha": "^2.2.32"
 	},
 	"dependencies": {
-		"vscode-languageclient": "^2.6.0"
+		"vscode-languageclient": "^2.6.0",
+		"vscode-jsonrpc": "^3.2.0",
+		"vscode-languageserver-types": "^3.2.0"
 	},
 	"__metadata": {
 		"id": "8466515a-a036-406e-b1e5-a04c7c81453c",
