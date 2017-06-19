@@ -1,9 +1,10 @@
 "use strict";
 
-const spawn = require('child_process').spawn;
+const execFile = require('child_process').execFile;
 const kill  = require('tree-kill');
 const path  = require('path');
 const fs    = require('fs');
+const Uri   = require('vscode-uri');
 
 const FAILED_REGEX = /\[\s+FAILED\s+\]\s+(\d+)\s+test/g;
 const PASSED_REGEX = /\[\s+PASSED\s+\]\s+(\d+)\s+tests/g;
@@ -14,11 +15,11 @@ const LUABUSTED_CONFIG_FILE = ".busted";
 const LUACOV_LINE_REGEX = '/(.+file+.)\s+(\d+)\s+(\d+)\s+(\d+\.\d+\%)/g';
 
 class TestRunner {
-    constructor(logger) {
+    constructor(intelliLua) {
         this._commander = "busted.bat";
         this._options   = ["-o", "gtest"];
         this._process   = null;
-        this._logger    = logger;
+        this._intelliLua= intelliLua;
 
         this._passed    = 0;
         this._failed    = 0;
@@ -76,49 +77,61 @@ class TestRunner {
             return true;
         }
 
-        try {
-            this._process = spawn(this._commander, this._options, {cwd: cwd, detached: false});
-        } catch (exception) {
-            this._logger("[ERROR] TestRunner.run >>> create run process failed.");
-            this._process = null;
-            return false;
-        }
-
-        this._process.unref();
-        this._process.stdout.on("data", (data) => {
-            var out = data.toString();
-
-            var failed = out.match(FAILED_REGEX);
-            var passed = out.match(PASSED_REGEX);
-
-            // this._logger(out);
-
-            if (failed) {
-                this._failed += parseInt(failed[0].match(/(\d+)/));
-            }
+        return new Promise((resolve, reject) => {
+            this._process = execFile(this._commander, this._options, {cwd: cwd}, (error, stdout, stderr) => {
+                if (!error) {
+                    reject(error, {stdout: stdout, stderr: stderr});
+                } else {
+                    resolve({stdout: stdout, stderr: stderr});
+                }
+            });
             
-            if (passed) {
-                this._passed += parseInt(passed[0].match(/(\d+)/));
-            }
-        });
-
-        this._process.stderr.on("data", (data) => {
-            this._logger("[ERROR] TestRunner.run >>> run tests error: " + data.toString());
-        });
-
-        this._process.on("close", (code, signal) => {
-            this._process = null;
-            
-            if (signal) {
-                this._logger("[ERROR] TestRunner.run >>> run tests exit with " + signal);
-                return;
-            }
-
-            var passedRate = this._passed / (this._passed + this._failed);
-            this._logger("Passed Rate: " +  passedRate.toPrecision(2) * 100 + "%");
         });
     }
 
 };
 
 exports.TestRunner = TestRunner;
+
+class TestManager {
+    constructor(intelliLua) {
+        this._iLua = intelliLua;
+    }
+
+    parseTestResult(data) {
+        var failed_cnt = 0;
+        var passed_cnt = 0;
+
+        this._iLua.debug(data.stdout);
+
+        data.stdout.split(/\r\n|\r|\n/).forEach((line) => {
+            var failed = FAILED_REGEX.exec(line);
+            var passed = PASSED_REGEX.exec(line);
+
+            if (failed) {
+                failed_cnt += parseInt(failed[0].match(/(\d+)/));
+            }
+            
+            if (passed) {
+                passed_cnt += parseInt(passed[0].match(/(\d+)/));
+            }
+        });
+        
+        var rate = passed_cnt / (passed_cnt + failed_cnt);
+        this._iLua.conn.console.info("Passed Rate: " +  rate.toPrecision(2) * 100 + "%");
+    }
+    runTests(document) {
+        var uri = document.uri;
+        var fileName = Uri.default.parse(uri).fsPath;
+        var cwd = path.dirname(fileName);
+
+        var testRunner = new TestRunner();
+        testRunner.run(cwd, fileName).then((result) => {
+            this.parseTestResult(result);
+        }, (err, result) => {
+            this._iLua.conn.console.error(result.stderr);
+        });
+    }
+}
+
+exports.TestManager = TestManager;

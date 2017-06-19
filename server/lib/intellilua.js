@@ -10,6 +10,7 @@ const {CompletionProvider} = require('./completion-provider');
 const {DefinitionProvider} = require('./definition-provider');
 const {HoverProvider}      = require('./hover-provider');
 const {DiagnosticProvider} = require('./diagnostic-provider');
+const {TestManager}        = require('./unit-test');
 
 class IntelliLua {
     constructor() {
@@ -23,6 +24,7 @@ class IntelliLua {
         this.definitionProvider = new DefinitionProvider(this);
         this.hoverProvider      = new HoverProvider(this);
         this.diagnosticProvider = new DiagnosticProvider(this);
+        this.testManager        = new TestManager(this);
 
         this.settings     = null;
         this._initialized = false;
@@ -89,7 +91,8 @@ class IntelliLua {
             this.debug(`[ERROR] onDidSave >>> parse file ${uri} is failed.`);
         }
 
-        this.diagnosticProvider.provideDiagnostic(change.document);
+        this.diagnosticProvider.provideDiagnostic(params.document);
+        this.testManager.runTests(params.document);
     }
 
     onDidChangeWatchedFiles(change) {

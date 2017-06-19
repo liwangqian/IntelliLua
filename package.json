@@ -63,8 +63,13 @@
 					"default": false,
 					"description": "enable debug output."
 				},
+				"intelliLua.luacheck.enable": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable luacheck."
+				},
 				"intelliLua.luacheck.luacheckPath": {
-					"type":"string",
+					"type": "string",
 					"default": "luacheck.exe",
 					"description": "path of the luacheck excutable (https://github.com/mpeterv/luacheck)."
 				},
@@ -77,6 +82,11 @@
 					"type":"string",
 					"default": ".",
 					"description": "the configuration (.luacheckrc) file for luacheck."
+				},
+				"intelliLua.tdd.enable": {
+					"type":"boolean",
+					"default": false,
+					"description": "enable lua test driven development mode."
 				}
 			}
 		}
