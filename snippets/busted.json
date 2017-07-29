@@ -1,0 +1,63 @@
+//snippets for lua busted unit test framework
+{
+    "describe": {
+        "body": "describe(\"${1:test suite description}\", function ()\n\t${2:-- do test}\nend)",
+        "description": "insert new test suite",
+        "prefix": "describe",
+        "scope": "source.lua"
+    },
+    "it": {
+        "body": "it(\"${1:test case description}\", function ()\n\t${2:-- do test}\nend)",
+        "description": "insert new test case",
+        "prefix": "it",
+        "scope": "source.lua"
+    },
+    "test": {
+        "body": "test(\"${1:test suite description}\", function ()\n\t${2:-- do test}\nend)",
+        "description": "inset new test case",
+        "prefix": "test",
+        "scope": "source.lua"
+    },
+    "setup": {
+        "body": "setup(function ()\n\t${1:-- do test suite setup works here}\nend)",
+        "description": "setup the test suite environment",
+        "prefix": "setup",
+        "scope": "source.lua"
+    },
+    "teardown": {
+        "body": "teardown(function ()\n\t${1:-- do test suite clean works here}\nend)",
+        "description": "clean the test suite environment",
+        "prefix": "teardown",
+        "scope": "source.lua"
+    },
+    "before_each": {
+        "body": "before_each(function ()\n\t${1:-- do before each case run}\nend)",
+        "description": "prepare for test case",
+        "prefix": "before_each",
+        "scope": "source.lua"
+    },
+    "after_each": {
+        "body": "after_each(function ()\n\t${1:-- do after each case run}\nend)",
+        "description": "do clean work after test run",
+        "prefix": "after_each",
+        "scope": "source.lua"
+    },
+    "stub": {
+        "body": "stub(${1:module}, \"${2:function_name_string}\")",
+        "description": "stub the function in module",
+        "prefix": "stub",
+        "scope": "source.lua"
+    },
+    "spy.on": {
+        "body": "spy.on(${1:module}, ${2:\"function_name_string\"})",
+        "description": "track the function in module",
+        "prefix": "spy.on",
+        "scope": "source.lua"
+    },
+    "assert.equal": {
+        "body": "assert.equal(${1:expect}, ${2:real})",
+        "description": "equal assertion",
+        "prefix": "assert.equal",
+        "scope": "source.lua"
+    }
+}

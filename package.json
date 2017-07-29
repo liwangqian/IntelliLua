@@ -89,7 +89,13 @@
 					"description": "enable lua test driven development mode."
 				}
 			}
-		}
+		},
+		"snippets": [
+			{
+				"language": "lua",
+				"path": "./snippets/busted.json"
+			}
+		]
 	},
 	"devDependencies": {
 		"typescript": "^2.1.4",
