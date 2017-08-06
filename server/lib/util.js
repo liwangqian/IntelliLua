@@ -1,5 +1,6 @@
 'use strict';
 
+const cp         = require('child_process');
 const walk       = require('walk');
 const fs         = require('fs');
 const langserver = require('vscode-languageserver');
@@ -39,4 +40,18 @@ const Uri        = require('vscode-uri').default;
 
     exports.getLineContent = getLineContent;
 
+})(exports);
+
+
+(function (exports) {
+
+    //加载lua语法的配置文件，输出json格式
+    function loadConfig(fileName, cwd) {
+        const program = `local _, config = require("luacov.util").load_config("${fileName}"); \
+                         print(require("dkjson").encode(config));`
+        const buffer = cp.execFileSync("lua", ["-e", program], {cwd: cwd});
+        return JSON.parse(buffer.toString());
+    }
+
+    exports.loadConfig = loadConfig;
 })(exports);

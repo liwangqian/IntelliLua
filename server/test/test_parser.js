@@ -2,44 +2,44 @@ const UnitTest = require('../lib/unit-test');
 const path     = require('path');
 const fs       = require('fs');
 const async    = require('async');
+const util = require("../lib/util");
 
+function test01() {
+    console.log("I am here")
 
-for (var i = 0; i < 1; ++i) {
-    const testRunner = new UnitTest.TestRunner(console.log);
-    testRunner.run("F:\\lua\\power_manage");
+    // var luacov = path.resolve("F:\\lua\\power_manage", ".luacov");
+    // if (fs.existsSync(luacov)) {
+    //     console.log(fs.readFileSync(luacov).toString());
+    // }
+
+    const json_report = JSON.parse(fs.readFileSync("F:\\lua\\power_manage\\luacov.report.out"));
+    json_report.forEach(function(element) {
+        console.log(element.name + " : " + element.cover)
+    });
+
+    const luacov = util.loadConfig(".luacov", "F:\\lua\\power_manage");
+
+    console.log(luacov.reporter);
+
+    const busted = util.loadConfig(".busted", "F:\\lua\\power_manage");
+
+    console.log(busted);
+
+    const protocols = require('../lib/protocols');
+
+    console.log(protocols.UnitTestRequest.type);
+
+    const fileName = path.resolve("F:\\lua", ".busted");
+    console.log(fileName);
+    console.log(fs.existsSync(fileName));
+
+    const bustedCfgTemplate = path.resolve(__dirname, "../../out/src/templates/.busted");
+
+    console.log(bustedCfgTemplate);
 }
-console.log("I am here")
 
-var luacov = path.resolve("F:\\lua\\power_manage", ".luacov");
-if (fs.existsSync(luacov)) {
-    console.log(fs.readFileSync(luacov).toString());
+function test02() {
+    
 }
 
-const fileName = 'external';
-const LUACOV_LINE_REGEX = /(.+)\s+(\d+)\s+(\d+)\s+(\d+\.\d+\%)/g;
-const content = fs.readFileSync('F:\\lua\\power_manage\\luacov.report.out').toString();
-var matches = content.match(LUACOV_LINE_REGEX);
-var rate  = 0;
-
-for (var i = 0; i < matches.length; ++i) {
-    if (matches[i].includes(fileName)) {
-        rate = matches[i].match(/(\d+.\d+)\%$/g)[0];
-        break;
-    }
-}
-
-console.log(rate);
-
-var x = [1,2,3,4,5,6,7,8,9];
-var y = [];
-async.map(x, (item, callback) => {
-    y.push(item * 9);
-});
-
-console.log(y)
-
-out = "luac: power_base.lua:427: '<eof>' expected near 'end'"
-
-regex = /^luac:\s+.+\:(\d+)\:\s+(.+)$/;
-
-console.log(regex.exec(out))
+test01();

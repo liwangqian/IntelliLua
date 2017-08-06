@@ -3,8 +3,9 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 'use strict';
-const LangServer           = require('vscode-languageserver');
-const IntelliLua           = require('./lib/intelliLua');
+const LangServer = require('vscode-languageserver');
+const IntelliLua = require('./lib/intelliLua');
+const Protocols  = require('./lib/protocols');
 
 const connection = LangServer.createConnection(new LangServer.IPCMessageReader(process),
                                                new LangServer.IPCMessageWriter(process));
@@ -19,6 +20,8 @@ connection.onInitialize((params) => {
         connection: connection, 
         documents: documents
     });
+
+    connection.console.info('Initialized.');
 
     return {
         capabilities: {
@@ -76,6 +79,9 @@ connection.onHover((params) => {
     return intelliLua.provideHover(params);
 });
 
+connection.onRequest(Protocols.UnitTestRequest.type, (params) => {
+    return intelliLua.onUnitTestRequest(params);
+})
 
 documents.listen(connection);
 // Listen on the connection

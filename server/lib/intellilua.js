@@ -10,7 +10,8 @@ const {CompletionProvider} = require('./completion-provider');
 const {DefinitionProvider} = require('./definition-provider');
 const {HoverProvider}      = require('./hover-provider');
 const {DiagnosticProvider} = require('./diagnostic-provider');
-const {TestManager}        = require('./unit-test');
+const unitTest             = require('./unit-test');
+const Protocols            = require('./protocols');
 
 class IntelliLua {
     constructor() {
@@ -24,7 +25,7 @@ class IntelliLua {
         this.definitionProvider = new DefinitionProvider(this);
         this.hoverProvider      = new HoverProvider(this);
         this.diagnosticProvider = new DiagnosticProvider(this);
-        this.testManager        = new TestManager(this);
+        this.testManager        = new unitTest.TestManager(this);
 
         this.settings     = null;
         this._initialized = false;
@@ -43,6 +44,13 @@ class IntelliLua {
         this.conn          = context.connection;
         this.documents     = context.documents;
         this._initialized  = true;
+
+        setTimeout(() => {
+            this.conn.sendRequest(Protocols.UnitTestRequest.type, {
+                type: "ready", 
+                params: {message: "Hello busted."}
+            });
+        }, 1000);
 
         return true;
     }
@@ -92,7 +100,6 @@ class IntelliLua {
         }
 
         this.diagnosticProvider.provideDiagnostic(params.document);
-        this.testManager.runTests(params.document);
     }
 
     onDidChangeWatchedFiles(change) {
@@ -137,6 +144,14 @@ class IntelliLua {
 
     showWarningMessage(msg) {
         this.conn.window.showWarningMessage(msg);
+    }
+
+    onUnitTestRequest(params) {
+        this.testManager.onUnitTestRequest(params);
+    }
+
+    sendUnitTestRequest(type, params) {
+        this.conn.sendRequest(Protocols.UnitTestRequest.type, {type: type, params: params});
     }
 }
 

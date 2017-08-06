@@ -3,7 +3,7 @@
 	"description": "Lua Intellisense Support For Vscode.",
 	"author": "liwangqian87@163.com",
 	"license": "MIT",
-	"version": "0.1.0",
+	"version": "1.1.0",
 	"publisher": "liwangqian",
 	"engines": {
 		"vscode": "^1.4.0"
@@ -29,6 +29,54 @@
 		"postinstall": "node ./node_modules/vscode/bin/install"
 	},
 	"contributes": {
+		"commands":[
+			{
+				"command": "intelliLua.bustedInit",
+				"title": "Busted: Init busted"
+			},
+			{
+				"command": "intelliLua.bustedRun",
+				"title": "Busted: Run tests"
+			},
+			{
+				"command": "intelliLua.bustedStop",
+				"title": "Busted: Stop run"
+			},
+			{
+				"command": "intelliLua.bustedNewTest",
+				"title": "Busted: New test"
+			},
+			{
+				"command": "intelliLua.bustedShowReport",
+				"title": "Busted: Show report"
+			},
+			{
+				"command": "intelliLua.bustedSaveReport",
+				"title": "Busted: Save report"
+			}
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "intelliLua.bustedInit"
+				},
+				{
+					"command": "intelliLua.bustedRun"
+				},
+				{
+					"command": "intelliLua.bustedStop"
+				},
+				{
+					"command": "intelliLua.bustedNewTest"
+				},
+				{
+					"command": "intelliLua.bustedShowReport"
+				},
+				{
+					"command": "intelliLua.bustedSaveReport"
+				}
+			]
+		},
 		"configuration": {
 			"type": "object",
 			"title": "IntelliLua configuration",

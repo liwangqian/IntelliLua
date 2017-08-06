@@ -6,6 +6,9 @@
 const path           = require("path");
 const vscode         = require("vscode");
 const languageclient = require("vscode-languageclient");
+const unitTest       = require("./lib/unit-test");
+
+var unitTestManager;
 
 function activate(context) {
     let serverModule  = context.asAbsolutePath(path.join('server', 'server.js'));
@@ -24,9 +27,29 @@ function activate(context) {
         }
     };
     
-    let disposable = new languageclient.LanguageClient('intelliLua', serverOptions, clientOptions).start();
+    let connection = new languageclient.LanguageClient('intelliLua', serverOptions, clientOptions);
+    context.subscriptions.push(connection.start());
 
-    context.subscriptions.push(disposable);
+    unitTestManager = new unitTest.UnitTestManager({connection: connection});
+
+    context.subscriptions.push(vscode.commands.registerCommand('intelliLua.bustedInit', () => {
+        unitTestManager.onInitCommand();
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand("intelliLua.bustedRun", () => {
+        unitTestManager.onRunCommand();
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand("intelliLua.bustedStop", () => {
+        unitTestManager.onStopCommand();
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand("intelliLua.bustedNewTest", () => {
+        unitTestManager.onNewTestCommand();
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand("intelliLua.bustedShowReport", () => {
+        unitTestManager.onShowReportCommand();
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand("intelliLua.bustedSaveReport", () => {
+        unitTestManager.onSaveReportCommand();
+    }));
 }
 
 exports.activate = activate;

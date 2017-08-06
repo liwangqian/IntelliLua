@@ -1,136 +1,141 @@
 "use strict";
 
-const execFile = require('child_process').execFile;
-const kill  = require('tree-kill');
-const path  = require('path');
-const fs    = require('fs');
-const Uri   = require('vscode-uri');
-
-const FAILED_REGEX = /\[\s+FAILED\s+\]\s+(\d+)\s+test/g;
-const PASSED_REGEX = /\[\s+PASSED\s+\]\s+(\d+)\s+tests/g;
-
-const LUACOV_CONFIG_FILE    = ".luacov";
-const LUABUSTED_CONFIG_FILE = ".busted";
-
-const LUACOV_LINE_REGEX = '/(.+file+.)\s+(\d+)\s+(\d+)\s+(\d+\.\d+\%)/g';
+const execFile      = require('child_process').execFile;
+const kill          = require('tree-kill');
+const path          = require('path');
+const fs            = require('fs');
+const Uri           = require('vscode-uri');
+const util          = require("./util");
+const outputParsers = require('./ut/outputParser');
 
 class TestRunner {
-    constructor(intelliLua) {
-        this._commander = "busted.bat";
-        this._options   = ["-o", "gtest"];
-        this._process   = null;
-        this._intelliLua= intelliLua;
-
-        this._passed    = 0;
-        this._failed    = 0;
-
-        this._lastTC    = [];
+    constructor(iLua) {
+        this.process = null;
+        this.iLua    = iLua;
     }
 
     stop() {
-        if (this._process) {
-            kill(this._process.pid, "SIGKILL");
+        if (this.process) {
+            kill(this.process.pid, "SIGKILL");
+            this.process = null;
         }
+
+        this.iLua.sendUnitTestRequest("stopped", {});
     }
 
-    dispose() {
-        this.stop();
+    run(cwd) {
+        if (this.process) {
+            this.iLua.sendUnitTestRequest("reject", {
+                message: "Test is still running."
+            });
+            return true;
+        }
+        
+        this.iLua.sendUnitTestRequest("started", {});
+        return new Promise((resolve, reject) => {
+            this.process = execFile("busted.bat", {cwd: cwd},(error, stdout, stderr) => {
+                if (error && !error.message.includes("Command failed")) {
+                    reject(error);
+                } else {
+                    resolve(stdout);
+                }
+                this.process = null;
+            });
+        });
     }
 
-    getCoverageReportFile(cwd) {
-        var luacov = path.resolve(cwd, LUACOV_CONFIG_FILE);
-        if (fs.existsSync(luacov)) {
-            var luacov_config = fs.readFileSync(luacov).toString();
-            var reportFile = luacov_config.match(/\s+\[\'reportfile\'\]\s+=\s+\'(\w+.?)+/g);
-            reportFile = path.resolve(cwd, reportFile);
-            if (fs.existsSync(reportFile)) {
-                return reportFile;
+};
+
+function getUnitTestConfig(fileName, cwd) {
+    var fullPath = path.resolve(cwd, fileName);
+    if (fs.existsSync(fullPath)) {
+        return util.loadConfig(fileName, cwd);
+    }
+
+    return null;
+}
+
+class TestManager {
+    constructor(iLua) {
+        this.iLua = iLua;
+        this.testRunner = new TestRunner(iLua);
+    }
+
+    getReport(bustedCfg, cwd, fileName) {
+        const luacovCfg = getUnitTestConfig(".luacov", cwd);
+        const reportFile = luacovCfg.reportfile;
+        const fullPath = path.resolve(cwd, bustedCfg.directory, reportFile);
+
+        var jsonReport = null;
+        
+        if (fs.existsSync(fullPath)) {
+            jsonReport = JSON.parse(fs.readFileSync(fullPath));
+        }
+
+        if (!jsonReport || !Array.isArray(jsonReport)) {
+            this.iLua.sendUnitTestRequest("error", {message: "report file not exist."});
+            return null;
+        }
+
+        for (var index = 0; index < jsonReport.length; index++) {
+            var report = jsonReport[index];
+            const fullPath = path.resolve(cwd, report.name);
+
+            if (fullPath == fileName) {
+                return report;
             }
         }
 
         return null;
     }
 
-    parseCoverage(cwd, fileName) {
-        var reportFile = this.getCoverageReportFile(cwd);
-        if (!reportFile) {
+    parseOutput(bustedCfg, cwd, data) {
+        let outputParser = outputParsers.get(bustedCfg.output);
+        if (outputParser === undefined) {
+            this.iLua.sendUnitTestRequest("error", {
+                message: "Unsupported output formatter: " + bustedCfg.default.output
+            });
             return null;
         }
 
-        var content = fs.readFileSync(reportFile).toString();
-        var coverages = content.match(LUACOV_LINE_REGEX);
-
-        var rate  = '0%';
-
-        for (var i = 0; i < coverages.length; ++i) {
-            if (coverages[i].includes(fileName)) {
-                rate = coverages[i].match(/(\d+.\d+)\%$/)[0];
-                break;
-            }
-        }
-
-        return rate;
-    }
-
-    run(cwd, fileName) {
-        if (this._process) {
-            return true;
-        }
-
-        return new Promise((resolve, reject) => {
-            this._process = execFile(this._commander, this._options, {cwd: cwd}, (error, stdout, stderr) => {
-                if (!error) {
-                    reject(error, {stdout: stdout, stderr: stderr});
-                } else {
-                    resolve({stdout: stdout, stderr: stderr});
-                }
-            });
-            
-        });
-    }
-
-};
-
-exports.TestRunner = TestRunner;
-
-class TestManager {
-    constructor(intelliLua) {
-        this._iLua = intelliLua;
-    }
-
-    parseTestResult(data) {
-        var failed_cnt = 0;
-        var passed_cnt = 0;
-
-        this._iLua.debug(data.stdout);
-
-        data.stdout.split(/\r\n|\r|\n/).forEach((line) => {
-            var failed = FAILED_REGEX.exec(line);
-            var passed = PASSED_REGEX.exec(line);
-
-            if (failed) {
-                failed_cnt += parseInt(failed[0].match(/(\d+)/));
-            }
-            
-            if (passed) {
-                passed_cnt += parseInt(passed[0].match(/(\d+)/));
-            }
-        });
+        return outputParser(data);
         
-        var rate = passed_cnt / (passed_cnt + failed_cnt);
-        this._iLua.conn.console.info("Passed Rate: " +  rate.toPrecision(2) * 100 + "%");
     }
-    runTests(document) {
-        var uri = document.uri;
-        var fileName = Uri.default.parse(uri).fsPath;
-        var cwd = path.dirname(fileName);
 
-        var testRunner = new TestRunner();
-        testRunner.run(cwd, fileName).then((result) => {
-            this.parseTestResult(result);
+    runTests(cwd, fileName) {
+        let bustedCfg = getUnitTestConfig(".busted", cwd);
+        this.testRunner.run(cwd).then((data) => {
+            const result = this.parseOutput(bustedCfg.default, cwd, data);
+            this.iLua.sendUnitTestRequest("message",  {message: data});
+            this.iLua.sendUnitTestRequest("finished", result);
+
+            if (bustedCfg.default.coverage) {
+                const report = this.getReport(bustedCfg.default, cwd, fileName);
+                const shortName = path.basename(fileName);
+
+                if (report != null) {
+                    this.iLua.sendUnitTestRequest("message", {
+                        message: `Coverage of ${shortName} is ${report.cover}`
+                    });
+                }
+            }
         }, (err, result) => {
-            this._iLua.conn.console.error(result.stderr);
+            this.iLua.sendUnitTestRequest("error", {
+                message: err.message
+            });
         });
+    }
+
+    stopTests(params) {
+        this.testRunner.stop();
+    }
+
+    onUnitTestRequest(params) {
+        if (params.type == "run") {
+            this.runTests(params.params.cwd, params.params.fileName);
+        } else if (params.type == "stop") {
+            this.stopTests(params.params);
+        }
     }
 }
 

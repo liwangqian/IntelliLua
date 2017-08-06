@@ -1,0 +1,15 @@
+-- busted 配置文件
+
+return {
+  _all = {
+    coverage = false
+  },
+  default = {
+    directory = './',               -- 切换到directory目录执行busted测试用例
+    lpath 		= "./stubs/?.lua;",	  -- lua脚本路径，可用于设置stub的搜索路径，会添加到package.path的开头
+    ROOT 		  = {'spec'},		        -- 测试用例所在的目录，相对于.busted文件的目录
+    pattern 	= '^test_',				    -- 匹配以test_开头的文件
+    output 		= 'gtest',				    -- 输出格式，可以是TAP,json,gtest,plainTerminal,junit,sound,utfTerminal
+    coverage 	= true,					      -- 是否进行覆盖率分析
+  }
+}
